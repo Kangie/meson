@@ -254,7 +254,12 @@ class RustModule(ExtensionModule):
 
         if self._bindgen_bin is None:
             self._bindgen_bin = state.find_program('bindgen', wanted=kwargs['bindgen_version'])
-            if self._bindgen_rust_target is not None:
+            # bindgen 0.71 enables more flexible target specification, any* Rust version string
+            # will be accepted as valid and will be automatically converted to an appropriate target
+            # based on internal logic. See rust-lang/rust-bindgen#2993 for more information.
+            # Additionally the 'invalid Rust target' output is changed in bindgen 0.71 and will not
+            # match the conditional below.
+            if self._bindgen_rust_target is not None and self._bindgen_bin.get_version() < '0.71':
                 # ExternalCommand.command's type is bonkers
                 _, _, err = mesonlib.Popen_safe(
                     T.cast('T.List[str]', self._bindgen_bin.get_command()) +
